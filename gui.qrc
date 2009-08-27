@@ -1,0 +1,35 @@
+<RCC>
+<qresource>
+	<file>qss/style.qss</file>
+	<file>qss/doxstyle.qss</file>
+
+	<file>images/back.gif</file>
+	<file>images/save.png</file>
+	<file>images/cancel.png</file>
+	<file>images/green1.png</file>
+	<file>images/green4.png</file>
+	<file>images/ok.png</file>
+	<file>images/about.png</file>
+	<file>images/config.png</file>
+	<file>images/home.png</file>
+	<file>images/home0.png</file>
+	<file>images/epiphany.png</file>
+	<file>images/exit.png</file>
+	<file>images/restore.png</file>
+	<file>images/multimedia.png</file>
+	<file>images/calendar.png</file>
+	<file>images/package_editors.png</file>
+
+	<file>images/printAct.png</file>
+	<file>images/closeAct.png</file>
+	<file>images/combo_down_arrow.png</file>
+	<file>images/combo_left_arrow.png</file>
+	<file>images/combo_right_arrow.png</file>
+	<file>images/combo_up_arrow.png</file>
+	<file>images/header_top_left.png</file>
+	<file>images/Utilities.png</file>
+
+
+
+</qresource>
+</RCC>
