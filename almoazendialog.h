@@ -42,9 +42,7 @@ class AlMoazenDialog:public QDialog,private Ui::AlMoazenDialog
 		void azkarClicked();
 		void printTimeClicked();
 		//void qiblaClicked();
-		
-		void advanceProgressBar();
-		
+				
 	signals:
 		void placeChanged();
 		
@@ -73,6 +71,7 @@ class AlMoazenDialog:public QDialog,private Ui::AlMoazenDialog
 		void computeNextPrayerTimeName();
 		void computePrayerTimeDifferences(QTime,QTime,QTime,QTime,QTime);
 		void computeNextPrayerTime();
+                void calcNextPrayer();
 		
 		
 		
