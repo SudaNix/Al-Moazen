@@ -11,6 +11,9 @@
 #include <QSettings>
 #include <QTimer>
 #include <QApplication>
+#include <QString>
+#include <iostream>
+#include <QMessageBox>
 
 #include "almoazendialog.h"
 #include "placedialog.h"
@@ -34,21 +37,13 @@ QDialog(parent)
 	readAzkarSettings();
 	
 	calculatePrayerTime();
-	//computeNextPrayerTimeName();
-	computeNextPrayerTime();
-	
-	progressBar->setMinimum(0);
-	progressBar->setMaximum(totalSec);
 
-	
 	initSystemTrayIcon();
 	
 	
 	placeDialog=0;
 	popupDialog=0;
-	
-	finished = 0;	//progressBar counter
-	//totalSec = 0 ;	
+
 	azkarEnabledCounter = m_playAzkarAfter*60;
 
 
@@ -71,13 +66,11 @@ QDialog(parent)
 	
 	startTimer(1000);	// one second
 	
-	//QTimer* t = new QTimer(this);
-	
-	//connect(t,SIGNAL(timeout()),this,SLOT(advanceProgressBar()));
-	//t->start(1000);
-	
 	setWindowIcon(QIcon(":/images/home.png"));
 	setWindowTitle(trUtf8("Al-Moazen   المؤذن"));
+
+
+
 }
 
 AlMoazenDialog::~AlMoazenDialog()
@@ -85,13 +78,6 @@ AlMoazenDialog::~AlMoazenDialog()
 	//delete prayerTime;
 }
 
-void AlMoazenDialog::advanceProgressBar()
-{
-	qDebug() << "bar: "<< finished;
-	
-	progressBar->setValue(++finished);
-	//qApp->processEvents();
-}
 
 void AlMoazenDialog::readPlaceSettings()
 {
@@ -171,7 +157,6 @@ void AlMoazenDialog::calculatePrayerTime()
 	
 	displayTimes(prayerTime.fajrTime(),prayerTime.shroukTime(),prayerTime.zuhrTime(),prayerTime.asrTime(),prayerTime.maghribTime(),prayerTime.ishaTime());
 	
-	computeNextPrayerTimeName();
 }
 
 void AlMoazenDialog::displayPlaceLabel()
@@ -289,40 +274,6 @@ QString AlMoazenDialog::zone(const QString& time)
 	return time.split(" ").at(1);
 }
 
-void AlMoazenDialog::computeNextPrayerTime()
-{
-	QTime time = QTime::currentTime();
-	qDebug() << time.toString();
-	QTime nextTime;     // next prayer time.
-	QTime total;
-	int totalSec =0;
-	
-	if( nextPrayer == trUtf8("الفجر") )
-		total = ishaUntilFajr;
-	
-	else if( nextPrayer == trUtf8("الظهر") )
-		total = fajrUntilZuhr;
-
-	
-	else if( nextPrayer == trUtf8("العصر") )
-		total = zuhrUntilAsr;
-	
-	else if( nextPrayer == trUtf8("المغرب") )
-	  
-		total = asrUntilMaghrib;
-	
-	else 
-		total = maghribUntilIsha;
-	
-	totalSec = total.hour()*60*60+total.minute()*60+total.second();
-	progressBar->setMinimum(0);
-	progressBar->setMaximum(totalSec);
-	
-	downTimer = total;
-	//nextPrayerTimeLabel->setText(QString::number(abs(downTimer.hour()-time.hour()))+":"+QString::number(abs(downTimer.minute()-time.minute()))+":"+QString::number(abs(downTimer.second()-time.second())));
-	//int p = finished / total;
-
-}
 
 void AlMoazenDialog::computePrayerTimeDifferences(QTime fajrTime,QTime zuhrTime,QTime asrTime,QTime maghribTime,QTime ishaTime)
 {
@@ -337,78 +288,8 @@ void AlMoazenDialog::computePrayerTimeDifferences(QTime fajrTime,QTime zuhrTime,
 	ishaUntilFajr = QTime(abs(abs(ishaTime.hour()-24)+fajrTime.hour()),abs(fajrTime.minute()-ishaTime.minute()),abs(fajrTime.second()-ishaTime.second())); 
 }
 
-// Must call after calculate
-void AlMoazenDialog::computeNextPrayerTimeName()
-{
-	QTime time=QTime::currentTime();
-	qDebug() << time.toString();
-	
-	QTime fajrTime(zone(fajrLineEdit->text()) == "AM" ? hour(fajrLineEdit->text()):hour(fajrLineEdit->text())+12,minute(fajrLineEdit->text()),second(fajrLineEdit->text()));
-	
-	QTime zuhrTime(zone(zuhrLineEdit->text()) == "PM" && hour(zuhrLineEdit->text()) > 12 ? hour(zuhrLineEdit->text())+12:hour(zuhrLineEdit->text()),minute(zuhrLineEdit->text()),second(zuhrLineEdit->text()));
-	
-	QTime asrTime(zone(asrLineEdit->text()) == "AM" ? hour(asrLineEdit->text()):hour(asrLineEdit->text())+12,minute(asrLineEdit->text()),second(asrLineEdit->text()));
-	
-	QTime maghribTime(zone(maghribLineEdit->text()) == "AM" ? hour(maghribLineEdit->text()):hour(maghribLineEdit->text())+12,minute(maghribLineEdit->text()),second(maghribLineEdit->text()));
-	
-	QTime ishaTime(zone(ishaLineEdit->text()) == "AM" ? hour(ishaLineEdit->text()):hour(ishaLineEdit->text())+12,minute(ishaLineEdit->text()),second(ishaLineEdit->text()));
-	
-	/*qDebug() <<"time: "<<time.toString();
-	qDebug() <<"fajr time  : "<< fajrTime.toString();
-	qDebug() <<"zuhr time: "<< zuhrTime.toString();
-	qDebug() <<"asr time: "<< asrTime.toString();
-	qDebug() <<"mag time: "<< maghribTime.toString();
-	qDebug() <<"isha time: "<< ishaTime.toString();
-	*/
 
-	computePrayerTimeDifferences(fajrTime,zuhrTime,asrTime,maghribTime,ishaTime);
-	
-	/*
-	qDebug() <<"fajrUntilZuhr: "<<fajrUntilZuhr.toString();
-	qDebug() <<"zuhrUntilAsr: "<< zuhrUntilAsr.toString();
-	qDebug() <<"asrUntilMaghrib: "<< asrUntilMaghrib.toString();
-	qDebug() <<"maghribUntilIsha: "<< maghribUntilIsha.toString();
-	qDebug() <<"ishaUntilFajr: "<< ishaUntilFajr.toString();
-	*/
 
-	if( time >= fajrTime && time < zuhrTime )
-	{
-		currentPrayer = trUtf8("الفجر");
-		nextPrayer = trUtf8("الظهر");
-	}
-	
-	else if( time >= zuhrTime && time < asrTime )
-	{
-		currentPrayer = trUtf8("الظهر");
-		nextPrayer = trUtf8("العصر");
-	}
-	
-	else if( time >= asrTime && time < maghribTime )
-	{
-		currentPrayer = trUtf8("العصر");
-		nextPrayer = trUtf8("المغرب");
-	}
-	
-	else if( time >= maghribTime && time < ishaTime )
-	{
-		currentPrayer = trUtf8("المغرب");
-		nextPrayer = trUtf8("العشاء");
-	}
-	
-	else
-	{
-		currentPrayer = trUtf8("العشاء");
-		nextPrayer = trUtf8("الفجر");
-	}
-	
-	
-	prayerNameLabel->setText(nextPrayer);
-	//prayerTimeLabel->setText("");
-
-	//qDebug() << "current prayer: "<<currentPrayer;
-	//qDebug() << "next prayer: "<<nextPrayer;
-	
-}
 
 void AlMoazenDialog::timerEvent(QTimerEvent* event)
 {
@@ -417,7 +298,7 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
 	QTime time=QTime::currentTime();
 	QString stime=time.toString("h:m:s A");
 
-
+        calcNextPrayer();
 	  //****************  Azkar pop-up ***************
 	 if( azkarEnabledCounter != 0 && m_azkarEnabled == "yes" )
 		azkarEnabledCounter--;
@@ -435,30 +316,12 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
     
 	//*************************************************
 	
-	
-	//qDebug() << "downTimer.hour(): " << downTimer.hour();
-	//qDebug() << "time.hour(): " << time.hour();
-
-	//int h = hour(time.toString());
-	//int m = minute(time.toString());
-	//int s = second(time.toString());
-	//QString c = zone(time.toString());
-
-	//if( h > 12 )
-	//      h-=12;
-
-
-	//qDebug() << "h: " << h;
-
-
-	//nextPrayerTimeLabel->setText(QString::number(abs(downTimer.hour()-h))+":"+QString::number(abs(downTimer.minute()-m))+":"+QString::number(abs(downTimer.second()-s)));
 
 	QDate date=QDate::currentDate();
 	QString sdate=date.toString("dddd MMM yyyy");
 	
 	dateLabel->setText(stime+"       "+sdate);
 	
-	progressBar->setValue(++finished);
 	
 	// check befor 5 minutes
 	if( m_alertBeforeFiveMin == "yes" )
@@ -487,11 +350,8 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
 		currentPrayer = trUtf8("الفجر");
 		nextPrayer = trUtf8("الظهر");
 		
-		computeNextPrayerTimeName();
 		finished = 0;
-		computeNextPrayerTime();
-		progressBar->setValue(finished);
-		
+
 	}
 	
 	else if ( stime == shroukLineEdit->text() )
@@ -505,10 +365,9 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
 		currentPrayer = trUtf8("الظهر");
 		nextPrayer = trUtf8("العصر");
 		
-		computeNextPrayerTimeName();
 		finished = 0;
-		computeNextPrayerTime();
-		progressBar->setValue(finished);
+                //computeNextPrayerTime()();
+                //progressBar->setValue(finished);
 	}
 			
 	else if ( stime == asrLineEdit->text() )
@@ -516,10 +375,8 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
 		popupDialog->display(trUtf8("العصر"),m_soundFileName);
 		currentPrayer = trUtf8("العصر");
 		nextPrayer = trUtf8("المغرب");
-		computeNextPrayerTimeName();
 		finished = 0;
-		computeNextPrayerTime();
-		progressBar->setValue(finished);
+
 	}
 	
 	else if ( stime == maghribLineEdit->text() )
@@ -528,10 +385,8 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
 		currentPrayer = trUtf8("المغرب");
 		nextPrayer = trUtf8("العشاء");
 		
-		computeNextPrayerTimeName();
 		finished = 0;
-		computeNextPrayerTime();
-		progressBar->setValue(finished);
+
 	}
 	
 	else if( stime == ishaLineEdit->text() )
@@ -540,11 +395,9 @@ void AlMoazenDialog::timerEvent(QTimerEvent* event)
 		currentPrayer = trUtf8("العشاء");
 		nextPrayer = trUtf8("الفجر");
 		
-		computeNextPrayerTimeName();
 		finished = 0;
-		computeNextPrayerTime();
-		progressBar->setValue(finished);
-	}
+
+        }
 	
 	if( currentDate != date )
 	{
@@ -796,4 +649,86 @@ void AlMoazenDialog::displayAzkarAlmasaSound()
 {
 	AzkarPopupDialog* dlg=new AzkarPopupDialog;
 	dlg->displayAzkarAlmasaSound();
+}
+
+
+void AlMoazenDialog::calcNextPrayer(){
+    QString prayerList [6] = {fajrLineEdit->text(),shroukLineEdit->text(),zuhrLineEdit->text(),asrLineEdit->text(),maghribLineEdit->text(),ishaLineEdit->text()};
+    int i;
+    int timeBetweenPrayer;
+    QTime nowTime=QTime::currentTime();
+    QTime NextPrayerTime;
+    for (i=0;i<5;i++){
+            timeBetweenPrayer = QTime::fromString(prayerList[i], "h:m:s A").secsTo(QTime::fromString(prayerList[i+1], "h:m:s A"));
+            NextPrayerTime =QTime::fromString(prayerList[i+1], "h:m:s A");
+
+           int secsToFajr =  nowTime.secsTo(QTime::fromString(prayerList[0], "h:m:s A"));
+           int secsToNextPrayer  = nowTime.secsTo(NextPrayerTime);
+
+           if (secsToNextPrayer > 0  ){
+                if      ((i==0) && ( secsToFajr > 0)){
+                   //This case when current time from midnight to fajr
+                   timeBetweenPrayer =(24*3600)- QTime::fromString(prayerList[0], "h:m:s A").secsTo(QTime::fromString(prayerList[5], "h:m:s A"));;
+                   prayerNameLabel->setText(trUtf8("الفجر"));
+                   progressBar->setMaximum(timeBetweenPrayer);
+                   progressBar->setValue(timeBetweenPrayer - secsToFajr);
+                   progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToFajr).toString()));
+
+
+               }
+                if      ((i==0) && ( secsToFajr < 0)){
+                    //This case when current time From Fajr to shrouk
+                   prayerNameLabel->setText(trUtf8("الشروق"));
+                   progressBar->setMaximum(timeBetweenPrayer);
+                   progressBar->setValue(timeBetweenPrayer - secsToNextPrayer);
+                   progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToNextPrayer).toString()));
+
+                }
+                else if (i==1){
+                    //This case when current time From Shrouk to Zuhr
+                   prayerNameLabel->setText(trUtf8("الظهر"));
+                   progressBar->setMaximum(timeBetweenPrayer);
+                   progressBar->setValue(timeBetweenPrayer - secsToNextPrayer);
+                   progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToNextPrayer).toString()));
+                }
+                else if (i==2){
+                    //This case when current time From Zuhr to Asr
+                   prayerNameLabel->setText(trUtf8("العصر"));
+                   progressBar-> setMaximum(timeBetweenPrayer);
+                   progressBar-> setValue(timeBetweenPrayer - secsToNextPrayer);
+                   progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToNextPrayer).toString()));
+
+               }
+                else if (i==3){
+                    //This case when current time From Asr to Maghrib
+                   prayerNameLabel->setText(trUtf8("المغرب"));
+                   progressBar->setMaximum(timeBetweenPrayer);
+                   progressBar->setValue(timeBetweenPrayer - secsToNextPrayer);
+                   progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToNextPrayer).toString()));
+
+
+               }
+                else if (i==4) {
+                    //This case when current time From Maghrib to Ishaa
+                   prayerNameLabel->setText(trUtf8("العشاء"));
+                   progressBar->setMaximum(timeBetweenPrayer);
+                   progressBar->setValue(timeBetweenPrayer - secsToNextPrayer);
+                   progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToNextPrayer).toString()));
+
+                }
+                break;
+           }
+
+           else {
+
+               timeBetweenPrayer = (24*3600) - QTime::fromString(prayerList[0], "h:m:s A").secsTo(QTime::fromString(prayerList[5], "h:m:s A"));
+               secsToNextPrayer  = (24*3600) - QTime::fromString(prayerList[0], "h:m:s A").secsTo(nowTime);
+               prayerNameLabel->setText(trUtf8("الفجر"));
+               progressBar->setMaximum(timeBetweenPrayer);
+               progressBar->setValue(timeBetweenPrayer - secsToNextPrayer);
+               progressBar->setFormat(QString("%1").arg(QTime().addSecs(secsToNextPrayer).toString()));
+
+           }
+    }
+
 }
